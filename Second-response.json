@@ -1,0 +1,46 @@
+{
+    "ok": true,
+    "uploadId": "-sdrQKGZlkVpzOQuZ_O9k",
+    "month": "2025-07",
+    "stats": {
+        "totalBank": 3,
+        "totalShop": 3,
+        "matched": 3,
+        "unmatched": 0,
+        "confidencePct": 33,
+        "bankOpeningBalance": 437,
+        "bankClosingBalance": 423,
+        "shopOpeningBalance": null,
+        "shopClosingBalance": null,
+        "bankTxCount": 3,
+        "shopTxCount": 3,
+        "txCountEqual": true,
+        "bankTotals": {
+            "debit": 1414,
+            "credit": 1400
+        },
+        "shopTotals": {
+            "debit": 1414,
+            "credit": 1400
+        },
+        "totalsEqual": true
+    },
+    "matches": [
+        {
+            "bankId": "bank-2025-07-31-0",
+            "shopId": "shop-2025-07-31-0",
+            "confidence": 1
+        },
+        {
+            "bankId": "bank-2025-07-31-1",
+            "shopId": "shop-2025-07-31-1",
+            "confidence": 0
+        },
+        {
+            "bankId": "bank-2025-07-31-2",
+            "shopId": "shop-2025-07-31-2",
+            "confidence": 0
+        }
+    ],
+    "anomalies": []
+}
