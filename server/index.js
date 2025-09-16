@@ -11,14 +11,28 @@ import fileRoutes from "./src/routes/fileRoutes.js";
 
 const app = express();
 
-try {
-  await initDb();
-  console.log('Database initialized successfully');
-} catch (error) {
-  console.error('Database initialization failed:', error.message);
-  console.error('Full error details:', error);
-  process.exit(1);
-}
+let dbInitialized = false;
+const initializeDbIfNeeded = async () => {
+  if (!dbInitialized) {
+    try {
+      await initDb();
+      console.log('Database initialized successfully');
+      dbInitialized = true;
+    } catch (error) {
+      console.error('Database initialization failed:', error.message);
+      throw error;
+    }
+  }
+};
+
+app.use(async (req, res, next) => {
+  try {
+    await initializeDbIfNeeded();
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 app.use((req, res, next) => {
   res.setHeader(
@@ -43,6 +57,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 
 const PORT = process.env.PORT || 4000;
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(process.cwd(), 'client/dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'client/dist/index.html'));
+  });
+}
 
 // Always export the app for Vercel
 export default app;

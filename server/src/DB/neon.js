@@ -3,10 +3,21 @@ dotenv.config();
 
 import { Pool } from "pg";
 
-export const pool = new Pool({
-  connectionString: process.env.DB_URL,
-  ssl: { rejectUnauthorized: false },
-});
+let pool = null;
+
+const getPool = () => {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DB_URL,
+      ssl: { rejectUnauthorized: false },
+      // ✅ Serverless optimizations
+      max: 1, // Limit connections for serverless
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+  }
+  return pool;
+};
 
 export async function initDb() {
   const sql = `
@@ -44,11 +55,15 @@ export async function initDb() {
   );
   CREATE INDEX IF NOT EXISTS idx_audits_user_month ON audits(user_id, month);
   `;
+  const pool = getPool();
   await pool.query(sql);
 }
 
+export { getPool as pool };
+
 // ---- helpers
 export async function createUser({ id, name, email, passwordHash }) {
+  const pool = getPool();
   const q = `
     INSERT INTO users (id, name, email, password_hash)
     VALUES ($1,$2,$3,$4) RETURNING id, name, email, created_at
@@ -58,6 +73,7 @@ export async function createUser({ id, name, email, passwordHash }) {
 }
 
 export async function findUserByEmail(email) {
+  const pool = getPool();
   const { rows } = await pool.query(
     "SELECT * FROM users WHERE email = $1 LIMIT 1",
     [email]
@@ -66,6 +82,7 @@ export async function findUserByEmail(email) {
 }
 
 export async function createUpload({ id, userId, bankFilename, shopFilename }) {
+  const pool = getPool();
   const q = `
     INSERT INTO uploads (id, user_id, bank_filename, shop_filename, status)
     VALUES ($1,$2,$3,$4,'processing')
@@ -81,6 +98,7 @@ export async function createUpload({ id, userId, bankFilename, shopFilename }) {
 }
 
 export async function finalizeUpload({ id, detectedMonth, status }) {
+  const pool = getPool();
   const q = `
     UPDATE uploads SET detected_month = $2, status = $3
     WHERE id = $1 RETURNING *
@@ -98,6 +116,7 @@ export async function createAudit({
   matches,
   anomalies,
 }) {
+  const pool = getPool();
   const q = `
     INSERT INTO audits (id, upload_id, user_id, month, stats_json, matches_json, anomalies_json)
     VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb)
@@ -117,6 +136,7 @@ export async function createAudit({
 }
 
 export async function listUploadsByUser(userId, limit = 20) {
+  const pool = getPool();
   const { rows } = await pool.query(
     `SELECT * FROM uploads WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
     [userId, limit]
@@ -124,15 +144,9 @@ export async function listUploadsByUser(userId, limit = 20) {
   return rows;
 }
 
-// export async function getAuditById(auditId, userId) {
-//   const { rows } = await pool.query(
-//     `SELECT * FROM audits WHERE id = $1 AND user_id = $2 LIMIT 1`,
-//     [auditId, userId]
-//   );
-//   return rows[0] || null;
-// }
 
 export async function getAuditById(uploadId, userId) {
+  const pool = getPool();
   const { rows } = await pool.query(
     `SELECT * FROM audits WHERE upload_id = $1 AND user_id = $2 LIMIT 1`,
     [uploadId, userId]
