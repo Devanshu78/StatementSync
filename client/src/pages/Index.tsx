@@ -76,7 +76,7 @@ const Index = () => {
             </h1>
           </div>
 
-          <Button variant="primary" onClick={() => navigate("/auth")} className="hidden md:block">
+          <Button variant="primary" onClick={() => navigate("/auth")} className="hidden md:inline-flex">
             Get Started
             <ArrowRight className="ml-1 md:ml-2 h-4 w-4" />
           </Button>
