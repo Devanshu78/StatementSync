@@ -65,11 +65,7 @@ function toNumber(value) {
 }
 
 function normDateFromExcelCell(cell, opts = {}) {
-  const {
-    bankRange = null,
-    date1904 = false,
-    dayFirstDefault = true
-  } = opts;
+  const { bankRange = null, date1904 = false, dayFirstDefault = true } = opts;
 
   if (cell == null || cell === "") return null;
 
@@ -80,7 +76,12 @@ function normDateFromExcelCell(cell, opts = {}) {
     if (y < 100) y += 2000; // just-in-case for 2-digit routed here
     const dt = new Date(Date.UTC(y, m - 1, d));
     // Guard against overflow (e.g., 2025-02-31)
-    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== m || dt.getUTCDate() !== d) return null;
+    if (
+      dt.getUTCFullYear() !== y ||
+      dt.getUTCMonth() + 1 !== m ||
+      dt.getUTCDate() !== d
+    )
+      return null;
     const yyyy = String(y).padStart(4, "0");
     const mm = String(m).padStart(2, "0");
     const dd = String(d).padStart(2, "0");
@@ -129,14 +130,29 @@ function normDateFromExcelCell(cell, opts = {}) {
       let ms = base + Math.floor(serial) * 86400000;
       if (!date1904 && serial >= 60) ms -= 86400000; // leap-year bug adjustment
       const d = new Date(ms);
-      return toIsoFromYmdUTC(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+      return toIsoFromYmdUTC(
+        d.getUTCFullYear(),
+        d.getUTCMonth() + 1,
+        d.getUTCDate()
+      );
     }
   }
 
   // --- 3) Named month formats: dd-MMM-yy(yy) or MMM-dd-yy(yy) ---
   const monthMap = {
-    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
-    jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12,
+    jan: 1,
+    feb: 2,
+    mar: 3,
+    apr: 4,
+    may: 5,
+    jun: 6,
+    jul: 7,
+    aug: 8,
+    sep: 9,
+    sept: 9,
+    oct: 10,
+    nov: 11,
+    dec: 12,
   };
 
   // dd-MMM-yy(yy) e.g., 1-Aug-25 or 01 Aug 2025
@@ -145,7 +161,10 @@ function normDateFromExcelCell(cell, opts = {}) {
     const dd = parseInt(m[1], 10);
     const mName = m[2].toLowerCase();
     const yStr = m[3];
-    const yyyy = yStr.length === 2 ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900) : parseInt(yStr, 10);
+    const yyyy =
+      yStr.length === 2
+        ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900)
+        : parseInt(yStr, 10);
     const mmNum = monthMap[mName];
     if (mmNum) return toIsoFromYmdUTC(yyyy, mmNum, dd);
   }
@@ -156,7 +175,10 @@ function normDateFromExcelCell(cell, opts = {}) {
     const mName = m[1].toLowerCase();
     const dd = parseInt(m[2], 10);
     const yStr = m[3];
-    const yyyy = yStr.length === 2 ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900) : parseInt(yStr, 10);
+    const yyyy =
+      yStr.length === 2
+        ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900)
+        : parseInt(yStr, 10);
     const mmNum = monthMap[mName];
     if (mmNum) return toIsoFromYmdUTC(yyyy, mmNum, dd);
   }
@@ -177,15 +199,19 @@ function normDateFromExcelCell(cell, opts = {}) {
     const a = parseInt(m[1], 10);
     const b = parseInt(m[2], 10);
     let yStr = m[3];
-    let yyyy = parseInt(yStr.length === 2 ? (yStr < "70" ? `20${yStr}` : `19${yStr}`) : yStr, 10);
+    let yyyy = parseInt(
+      yStr.length === 2 ? (yStr < "70" ? `20${yStr}` : `19${yStr}`) : yStr,
+      10
+    );
 
-    const candDayFirst  = toIsoFromYmdUTC(yyyy, b, a); // dd/mm/yyyy  => (y, m=b, d=a)
+    const candDayFirst = toIsoFromYmdUTC(yyyy, b, a); // dd/mm/yyyy  => (y, m=b, d=a)
     const candMonthFirst = toIsoFromYmdUTC(yyyy, a, b); // mm/dd/yyyy  => (y, m=a, d=b)
 
     // Filter out invalid dates (null). If both valid, prefer bankRange -> dayFirstDefault.
     const cands = [];
-    if (candDayFirst)  cands.push(candDayFirst);
-    if (candMonthFirst && candMonthFirst !== candDayFirst) cands.push(candMonthFirst);
+    if (candDayFirst) cands.push(candDayFirst);
+    if (candMonthFirst && candMonthFirst !== candDayFirst)
+      cands.push(candMonthFirst);
 
     if (cands.length === 1) return cands[0];
     if (cands.length === 2) {
@@ -203,14 +229,16 @@ function normDateFromExcelCell(cell, opts = {}) {
     const dd = parseInt(m[1], 10);
     const mmNum = monthMap[m[2].toLowerCase()];
     const yStr = m[3];
-    const yyyy = yStr.length === 2 ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900) : parseInt(yStr, 10);
+    const yyyy =
+      yStr.length === 2
+        ? parseInt(yStr, 10) + (yStr < "70" ? 2000 : 1900)
+        : parseInt(yStr, 10);
     if (mmNum) return toIsoFromYmdUTC(yyyy, mmNum, dd);
   }
 
   // Unrecognized
   return null;
 }
-
 
 export async function extractExcelTransactions(filePath) {
   const data = await fs.readFile(filePath);
@@ -227,7 +255,9 @@ export async function extractExcelTransactions(filePath) {
 
   function findColumnMap(headerRow) {
     const map = {};
-    const cols = (headerRow || []).map((c) => (c == null ? "" : String(c).trim().toLowerCase()));
+    const cols = (headerRow || []).map((c) =>
+      c == null ? "" : String(c).trim().toLowerCase()
+    );
     for (const key of Object.keys(preferredHeaders)) {
       const aliases = preferredHeaders[key];
       for (let i = 0; i < cols.length; i++) {
@@ -256,7 +286,11 @@ export async function extractExcelTransactions(filePath) {
     let colMap = {};
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
       const map = findColumnMap(rows[i]);
-      if (Object.keys(map).length >= 2 && map.date != null && (map.debit != null || map.credit != null)) {
+      if (
+        Object.keys(map).length >= 2 &&
+        map.date != null &&
+        (map.debit != null || map.credit != null)
+      ) {
         headerIdx = i;
         colMap = map;
         break;
@@ -272,7 +306,8 @@ export async function extractExcelTransactions(filePath) {
       const date = normDateFromExcelCell(row[colMap.date ?? -1]);
       const debit = toNumber(row[colMap.debit ?? -1]);
       const credit = toNumber(row[colMap.credit ?? -1]);
-      const balance = colMap.balance != null ? toNumber(row[colMap.balance]) : null;
+      const balance =
+        colMap.balance != null ? toNumber(row[colMap.balance]) : null;
 
       if (isOpening) {
         if (balance != null) openingBalance = balance;
@@ -308,7 +343,11 @@ export async function extractExcelTransactions(filePath) {
     }
   }
 
-  if (openingBalance == null && (sumDebit || sumCredit) && closingBalance != null) {
+  if (
+    openingBalance == null &&
+    (sumDebit || sumCredit) &&
+    closingBalance != null
+  ) {
     // Derive opening if only closing present
     openingBalance = closingBalance - sumCredit + sumDebit;
   }

@@ -14,7 +14,6 @@
   "dependencies": {
     "@google-cloud/vision": "^5.3.3",
     "@neondatabase/serverless": "^1.0.1",
-    "xlsx": "^0.18.5",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -23,6 +22,8 @@
     "multer": "^2.0.2",
     "nanoid": "^5.1.5",
     "nodemon": "^3.1.10",
-    "pg": "^8.16.3"
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3",
+    "xlsx": "^0.18.5"
   }
 }

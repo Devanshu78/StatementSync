@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import { extractTextSmart, extractExcelTransactions } from "../utils/vision.js";
 import { parseTextToTransactions } from "../utils/parseText.js";
 import { matchTransactions } from "../utils/match.js";
-import { createUpload, finalizeUpload, createAudit } from "../DB/neon.js";
+import { createUpload, finalizeUpload, listUploadsByUser, createAudit, getAuditById } from "../DB/neon.js";
 
 export async function getFiles(req, res) {
   try {
@@ -139,34 +139,6 @@ export async function getFiles(req, res) {
     // Bank in-range is the bank itself (it defined the window)
     const bankInRange = bankTx;
 
-    // Console insight
-    console.log("[filesController] Bank window:", {
-      start: bankStart,
-      end: bankEnd,
-    });
-    console.log("[filesController] Shop filter:", {
-      detectedMonth,
-      kept: shopInRange.length,
-      original: shopTx.length,
-      out_of_range: shopOutOfRange.length,
-    });
-    if (shopOutOfRange.length) {
-      console.log(
-        "[filesController] Shop out_of_range items:",
-        shopOutOfRange.map((s) => ({
-          id: s.id,
-          date: s.date,
-          epochMs: s.date ? new Date(s.date + "T00:00:00Z").getTime() : null,
-          isoUtc: s.date ? new Date(s.date + "T00:00:00Z").toISOString() : null,
-          amount: s.amount,
-          debit: s.debitRaw ?? (s.amount < 0 ? Math.abs(s.amount) : 0),
-          credit: s.creditRaw ?? (s.amount > 0 ? s.amount : 0),
-          description: (s.description || "").slice(0, 120),
-          reference: s.reference ?? null,
-        }))
-      );
-    }
-
     // ---- Matching (use in-range Shop) ----
     const result = matchTransactions(bankInRange, shopInRange, detectedMonth);
 
@@ -291,5 +263,69 @@ export async function getFiles(req, res) {
     return res
       .status(500)
       .json({ error: "Processing failed", details: e.message });
+  }
+}
+
+export async function getHistory(req, res) {
+  try {
+    const { limit } = req.query;
+    const userId = req.user.id;
+    
+    const uploads = await listUploadsByUser(userId, parseInt(limit));
+    
+    return res.json({ 
+      ok: true, 
+      uploads: uploads.map(upload => ({
+        id: upload.id,
+        bank_filename: upload.bank_filename,
+        shop_filename: upload.shop_filename,
+        detected_month: upload.detected_month,
+        status: upload.status,
+        created_at: upload.created_at
+      }))
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Failed to get Records", details: error.message });
+  }
+}
+
+export async function getAuditByUploadId(req, res) {
+  try {
+    const { id : uploadId } = req.params;
+    const userId = req.user.id;
+    
+    // First get the upload to verify ownership
+    const uploads = await listUploadsByUser(userId, 1000); // Get all uploads to find the one
+    const upload = uploads.find(u => u.id === uploadId);
+    if (!upload) {
+      return res.status(404).json({ error: "Upload not found" });
+    }
+    
+    // Get the audit data for this upload
+    const audit = await getAuditById(uploadId, userId);
+    
+    if (!audit) {
+      return res.status(404).json({ error: "Audit not found" });
+    }
+    return res.json({ 
+      ok: true, 
+      audit: {
+        id: audit.id,
+        upload_id: audit.upload_id,
+        month: audit.month,
+        stats_json: audit.stats_json,
+        matches_json: audit.matches_json,
+        anomalies_json: audit.anomalies_json,
+        created_at: audit.created_at
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Failed to get audit details", details: error.message });
   }
 }
