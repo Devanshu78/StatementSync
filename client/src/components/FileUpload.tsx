@@ -11,12 +11,12 @@ interface FileUploadProps {
   className?: string;
 }
 
-export const FileUpload = ({ 
-  onFileSelect, 
-  selectedFile, 
-  accept = "*", 
-  id, 
-  className 
+export const FileUpload = ({
+  onFileSelect,
+  selectedFile,
+  accept = "*",
+  id,
+  className,
 }: FileUploadProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +34,7 @@ export const FileUpload = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       onFileSelect(files[0]);
@@ -51,16 +51,16 @@ export const FileUpload = ({
   const handleRemove = () => {
     onFileSelect(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
@@ -87,7 +87,7 @@ export const FileUpload = ({
           className="hidden"
           id={id}
         />
-        
+
         {selectedFile ? (
           <div className="space-y-2">
             <div className="flex items-center justify-center">
@@ -106,8 +106,10 @@ export const FileUpload = ({
               <Upload className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium text-foreground">Drop your file here</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm md:text-md font-medium text-foreground">
+                Drop your file here
+              </p>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Or click to browse files
               </p>
             </div>
@@ -120,7 +122,9 @@ export const FileUpload = ({
           <div className="flex items-center space-x-3">
             <File className="h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-foreground">{selectedFile.name}</p>
+              <p className="text-sm font-medium text-foreground">
+                {selectedFile.name}
+              </p>
               <p className="text-xs text-muted-foreground">
                 {formatFileSize(selectedFile.size)}
               </p>
