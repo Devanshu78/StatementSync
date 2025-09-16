@@ -42,14 +42,6 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(process.cwd(), 'client/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'client/dist/index.html'));
-  });
-}
-
 const PORT = process.env.PORT || 4000;
 
 // Always export the app for Vercel
