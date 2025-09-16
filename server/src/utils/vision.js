@@ -2,59 +2,60 @@ import fs from "fs/promises";
 import path from "path";
 import XLSX from "xlsx";
 
-export async function extractTextSmart(filePath, originalName) {
-  const ext = path.extname(originalName).toLowerCase();
+// export async function extractTextSmart(buffer, originalName) {
+//   const ext = path.extname(originalName).toLowerCase();
 
-  if (ext === ".pdf") {
-    throw new Error(
-      "PDF not supported. Please upload CSV or TXT files instead."
-    );
-  }
+//   if (ext === ".pdf") {
+//     throw new Error(
+//       "PDF not supported. Please upload CSV or TXT files instead."
+//     );
+//   }
 
-  if (ext === ".csv" || ext === ".txt") {
-    return await fs.readFile(filePath, "utf-8");
-  }
+//   if (ext === ".csv" || ext === ".txt") {
+//     return await buffer.toString("utf-8");
+//   }
 
-  if (ext === ".xlsx" || ext === ".xls") {
-    const data = await fs.readFile(filePath);
-    const wb = XLSX.read(data, { type: "buffer" });
+//   if (ext === ".xlsx" || ext === ".xls") {
+//     const wb = XLSX.read(buffer, { type: "buffer" });
+//     const sheetName = wb.SheetNames[0];
+//     const sheet = wb.Sheets[sheetName];
 
-    const DATE_RE = /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/;
-    const AMT_RE = /[-+]?\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/;
+//     const DATE_RE = /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/;
+//     const AMT_RE = /[-+]?\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/;
 
-    const allLines = [];
-    for (const sheetName of wb.SheetNames) {
-      const sheet = wb.Sheets[sheetName];
-      if (!sheet) continue;
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      if (!Array.isArray(rows) || rows.length === 0) continue;
+//     const allLines = [];
+//     for (const sheetName of wb.SheetNames) {
+//       const sheet = wb.Sheets[sheetName];
+//       if (!sheet) continue;
+//       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+//       if (!Array.isArray(rows) || rows.length === 0) continue;
 
-      // Find first data row: row containing a likely date and a number
-      let startIdx = 1; // default skip header row
-      for (let i = 0; i < Math.min(rows.length, 50); i++) {
-        const row = rows[i] || [];
-        const joined = row.map((c) => (c == null ? "" : String(c))).join(" ");
-        if (DATE_RE.test(joined) && AMT_RE.test(joined)) {
-          startIdx = i;
-          break;
-        }
-      }
+//       // Find first data row: row containing a likely date and a number
+//       let startIdx = 1; // default skip header row
+//       for (let i = 0; i < Math.min(rows.length, 50); i++) {
+//         const row = rows[i] || [];
+//         const joined = row.map((c) => (c == null ? "" : String(c))).join(" ");
+//         if (DATE_RE.test(joined) && AMT_RE.test(joined)) {
+//           startIdx = i;
+//           break;
+//         }
+//       }
 
-      for (let i = startIdx; i < rows.length; i++) {
-        const row = rows[i] || [];
-        const line = row
-          .map((cell) => (cell == null ? "" : String(cell)))
-          .join(" ")
-          .trim();
-        if (line) allLines.push(line);
-      }
-    }
+//       for (let i = startIdx; i < rows.length; i++) {
+//         const row = rows[i] || [];
+//         const line = row
+//           .map((cell) => (cell == null ? "" : String(cell)))
+//           .join(" ")
+//           .trim();
+//         if (line) allLines.push(line);
+//       }
+//     }
 
-    return allLines.join("\n");
-  }
+//     return allLines.join("\n");
+//   }
 
-  return await fs.readFile(filePath, "utf-8").catch(() => "");
-}
+//   return await fs.readFile(filePath, "utf-8").catch(() => "");
+// }
 
 function toNumber(value) {
   if (value == null || value === "") return 0;
@@ -240,9 +241,186 @@ function normDateFromExcelCell(cell, opts = {}) {
   return null;
 }
 
-export async function extractExcelTransactions(filePath) {
-  const data = await fs.readFile(filePath);
-  const wb = XLSX.read(data, { type: "buffer", cellDates: true });
+// export async function extractExcelTransactions(filePath) {
+//   const data = await fs.readFile(filePath);
+//   const wb = XLSX.read(data, { type: "buffer", cellDates: true });
+
+//   const preferredHeaders = {
+//     date: ["date", "txn date", "transaction date"],
+//     description: ["transaction details", "description", "narration", "details"],
+//     debit: ["debit", "withdrawal", "dr"],
+//     credit: ["credit", "deposit", "cr"],
+//     balance: ["balance", "running balance"],
+//     reference: ["cheque/reference#", "reference", "ref", "cheque no"],
+//   };
+
+//   function findColumnMap(headerRow) {
+//     const map = {};
+//     const cols = (headerRow || []).map((c) =>
+//       c == null ? "" : String(c).trim().toLowerCase()
+//     );
+//     for (const key of Object.keys(preferredHeaders)) {
+//       const aliases = preferredHeaders[key];
+//       for (let i = 0; i < cols.length; i++) {
+//         if (aliases.includes(cols[i])) {
+//           map[key] = i;
+//           break;
+//         }
+//       }
+//     }
+//     return map;
+//   }
+
+//   const transactions = [];
+//   let openingBalance = null;
+//   let closingBalance = null;
+//   let sumDebit = 0;
+//   let sumCredit = 0;
+
+//   for (const sheetName of wb.SheetNames) {
+//     const sheet = wb.Sheets[sheetName];
+//     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
+//     if (!rows || rows.length === 0) continue;
+
+//     // Detect header row by presence of expected columns
+//     let headerIdx = 0;
+//     let colMap = {};
+//     for (let i = 0; i < Math.min(rows.length, 10); i++) {
+//       const map = findColumnMap(rows[i]);
+//       if (
+//         Object.keys(map).length >= 2 &&
+//         map.date != null &&
+//         (map.debit != null || map.credit != null)
+//       ) {
+//         headerIdx = i;
+//         colMap = map;
+//         break;
+//       }
+//     }
+
+//     for (let r = headerIdx + 1; r < rows.length; r++) {
+//       const row = rows[r] || [];
+//       const descRaw = row[colMap.description ?? -1];
+//       const desc = descRaw == null ? "" : String(descRaw);
+//       const isOpening = /opening balance/i.test(desc);
+
+//       const date = normDateFromExcelCell(row[colMap.date ?? -1]);
+//       const debit = toNumber(row[colMap.debit ?? -1]);
+//       const credit = toNumber(row[colMap.credit ?? -1]);
+//       const balance =
+//         colMap.balance != null ? toNumber(row[colMap.balance]) : null;
+
+//       if (isOpening) {
+//         if (balance != null) openingBalance = balance;
+//         // Do not count Opening Balance as a transaction row
+//         continue;
+//       }
+
+//       // Skip empty rows
+//       if (!date && !debit && !credit && !balance && !desc.trim()) continue;
+
+//       // Use signed amount: debit negative, credit positive
+//       let amount = 0;
+//       if (debit && !credit) amount = -Math.abs(debit);
+//       else if (credit && !debit) amount = Math.abs(credit);
+//       else if (credit && debit) amount = credit - debit;
+
+//       if (debit) sumDebit += Math.abs(debit);
+//       if (credit) sumCredit += Math.abs(credit);
+
+//       if (date) {
+//         transactions.push({
+//           date,
+//           amount,
+//           description: desc,
+//           reference: row[colMap.reference ?? -1] ?? null,
+//           balance,
+//           debitRaw: debit || 0,
+//           creditRaw: credit || 0,
+//         });
+//       }
+
+//       if (balance != null) closingBalance = balance; // last seen balance
+//     }
+//   }
+
+//   if (
+//     openingBalance == null &&
+//     (sumDebit || sumCredit) &&
+//     closingBalance != null
+//   ) {
+//     // Derive opening if only closing present
+//     openingBalance = closingBalance - sumCredit + sumDebit;
+//   }
+
+//   if (closingBalance == null && openingBalance != null) {
+//     closingBalance = openingBalance + sumCredit - sumDebit;
+//   }
+
+//   return { transactions, openingBalance, closingBalance, sumDebit, sumCredit };
+// }
+
+
+export async function extractTextSmart(buffer, originalName) {
+  const ext = path.extname(originalName).toLowerCase();
+
+  if (ext === ".pdf") {
+    throw new Error(
+      "PDF not supported. Please upload CSV or TXT files instead."
+    );
+  }
+
+  if (ext === ".csv" || ext === ".txt") {
+    // ✅ Use buffer directly - no await needed for toString()
+    return buffer.toString("utf-8");
+  }
+
+  if (ext === ".xlsx" || ext === ".xls") {
+    // ✅ Use buffer directly instead of reading from file
+    const wb = XLSX.read(buffer, { type: "buffer" });
+    
+    const DATE_RE = /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/;
+    const AMT_RE = /[-+]?\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/;
+
+    const allLines = [];
+    for (const sheetName of wb.SheetNames) {
+      const sheet = wb.Sheets[sheetName];
+      if (!sheet) continue;
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+
+      // Find first data row: row containing a likely date and a number
+      let startIdx = 1; // default skip header row
+      for (let i = 0; i < Math.min(rows.length, 50); i++) {
+        const row = rows[i] || [];
+        const joined = row.map((c) => (c == null ? "" : String(c))).join(" ");
+        if (DATE_RE.test(joined) && AMT_RE.test(joined)) {
+          startIdx = i;
+          break;
+        }
+      }
+
+      for (let i = startIdx; i < rows.length; i++) {
+        const row = rows[i] || [];
+        const line = row
+          .map((cell) => (cell == null ? "" : String(cell)))
+          .join(" ")
+          .trim();
+        if (line) allLines.push(line);
+      }
+    }
+
+    return allLines.join("\n");
+  }
+
+  // ✅ Remove the fs.readFile fallback - it won't work in Vercel serverless
+  throw new Error(`Unsupported file type: ${ext}`);
+}
+
+// ✅ Also update extractExcelTransactions to use buffer
+export async function extractExcelTransactions(buffer) {
+  // ✅ Use buffer directly instead of reading from file
+  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
 
   const preferredHeaders = {
     date: ["date", "txn date", "transaction date"],
@@ -268,6 +446,27 @@ export async function extractExcelTransactions(filePath) {
       }
     }
     return map;
+  }
+
+  function normDateFromExcelCell(cell) {
+    if (!cell) return null;
+    let date;
+    if (cell instanceof Date) {
+      date = cell;
+    } else if (typeof cell === 'number') {
+      // Excel date serial number
+      date = new Date((cell - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(cell);
+    }
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  }
+
+  function toNumber(val) {
+    if (val == null) return 0;
+    const num = parseFloat(String(val).replace(/[,\s]/g, ''));
+    return isNaN(num) ? 0 : num;
   }
 
   const transactions = [];
@@ -358,3 +557,4 @@ export async function extractExcelTransactions(filePath) {
 
   return { transactions, openingBalance, closingBalance, sumDebit, sumCredit };
 }
+

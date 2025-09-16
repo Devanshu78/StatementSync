@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import fs from "fs/promises";
 import { extractTextSmart, extractExcelTransactions } from "../utils/vision.js";
 import { parseTextToTransactions } from "../utils/parseText.js";
 import { matchTransactions } from "../utils/match.js";
@@ -15,6 +14,8 @@ export async function getFiles(req, res) {
         .json({ error: "Provide both bank and shop files" });
     }
 
+    const bankBuffer = bankFile.buffer;
+    const shopBuffer = shopFile.buffer;
     const userId = req.user.id;
     const userMonth = req.body?.month || req.query?.month; // optional "YYYY-MM"
 
@@ -40,7 +41,7 @@ export async function getFiles(req, res) {
 
     // ---- Load + parse BANK (authoritative) ----
     if (bankExt === "xlsx" || bankExt === "xls") {
-      const bankExtr = await extractExcelTransactions(bankFile.path);
+      const bankExtr = await extractExcelTransactions(bankBuffer);
       bankTx = bankExtr.transactions.map((t, i) => ({
         id: `bank-${t.date}-${i}`,
         source: "bank",
@@ -56,7 +57,7 @@ export async function getFiles(req, res) {
       };
     } else {
       const bankText = await extractTextSmart(
-        bankFile.path,
+        bankBuffer,
         bankFile.originalname
       );
       bankTx = parseTextToTransactions(bankText, "bank");
@@ -106,7 +107,7 @@ export async function getFiles(req, res) {
 
     // ---- Load + parse SHOP (no month detection — filter by bank window) ----
     if (shopExt === "xlsx" || shopExt === "xls") {
-      const shopExtr = await extractExcelTransactions(shopFile.path);
+      const shopExtr = await extractExcelTransactions(shopBuffer);
       shopTx = shopExtr.transactions.map((t, i) => ({
         id: `shop-${t.date}-${i}`,
         source: "shop",
@@ -122,7 +123,7 @@ export async function getFiles(req, res) {
       };
     } else {
       const shopText = await extractTextSmart(
-        shopFile.path,
+        shopBuffer,
         shopFile.originalname
       );
       shopTx = parseTextToTransactions(shopText, "shop");
