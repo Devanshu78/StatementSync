@@ -121,10 +121,18 @@ export async function listUploadsByUser(userId, limit = 20) {
   return rows;
 }
 
-export async function getAuditById(auditId, userId) {
+// export async function getAuditById(auditId, userId) {
+//   const { rows } = await pool.query(
+//     `SELECT * FROM audits WHERE id = $1 AND user_id = $2 LIMIT 1`,
+//     [auditId, userId]
+//   );
+//   return rows[0] || null;
+// }
+
+export async function getAuditById(uploadId, userId) {
   const { rows } = await pool.query(
-    `SELECT * FROM audits WHERE id = $1 AND user_id = $2 LIMIT 1`,
-    [auditId, userId]
+    `SELECT * FROM audits WHERE upload_id = $1 AND user_id = $2 LIMIT 1`,
+    [uploadId, userId]
   );
   return rows[0] || null;
 }

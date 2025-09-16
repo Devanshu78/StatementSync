@@ -3,8 +3,7 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { requireAuth } from "../middlerware/authMiddlerware.js";
-import { getFiles } from "../Controllers/filesController.js";
-import { listUploadsByUser, getAuditById } from "../DB/neon.js";
+import { getFiles, getHistory , getAuditByUploadId} from "../Controllers/filesController.js";
 
 const router = Router();
 
@@ -27,18 +26,8 @@ router.post(
   getFiles
 );
 
-router.get("/history", requireAuth, async (req, res) => {
-  const rows = await listUploadsByUser(
-    req.user.id,
-    Number(req.query.limit) || 20
-  );
-  res.json({ ok: true, uploads: rows });
-});
+router.get("/history", requireAuth, getHistory);
 
-router.get("/audit/:id", requireAuth, async (req, res) => {
-  const audit = await getAuditById(req.params.id, req.user.id);
-  if (!audit) return res.status(404).json({ error: "Not found" });
-  res.json({ ok: true, audit });
-});
+router.get("/audit/:id", requireAuth, getAuditByUploadId);
 
 export default router;
