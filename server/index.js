@@ -5,11 +5,15 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 import { initDb } from "./src/DB/neon.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import fileRoutes from "./src/routes/fileRoutes.js";
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let dbInitialized = false;
 const initializeDbIfNeeded = async () => {
