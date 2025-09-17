@@ -59,10 +59,12 @@ app.use("/api/files", fileRoutes);
 const PORT = process.env.PORT || 4000;
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(process.cwd(), 'client/dist')));
-  
+  const staticPath = path.join(__dirname, '../client/dist');
+  console.log("Static Path: ",staticPath);
+  app.use(express.static(staticPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'client/dist/index.html'));
+    console.log("Index HTML Path: ", req.path);
+    res.sendFile(path.join(staticPath, 'index.html'));
   });
 }
 
