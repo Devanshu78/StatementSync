@@ -4,16 +4,12 @@ dotenv.config();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 import { initDb } from "./src/DB/neon.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import fileRoutes from "./src/routes/fileRoutes.js";
 
 const app = express();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let dbInitialized = false;
 const initializeDbIfNeeded = async () => {
@@ -61,16 +57,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 
 const PORT = process.env.PORT || 4000;
-
-if (process.env.NODE_ENV === 'production') {
-  const staticPath = path.join(__dirname, '../client/dist');
-  console.log("Static Path: ",staticPath);
-  app.use(express.static(staticPath));
-  app.get('*', (req, res) => {
-    console.log("Index HTML Path: ", req.path);
-    res.sendFile(path.join(staticPath, 'index.html'));
-  });
-}
 
 // Always export the app for Vercel
 export default app;
