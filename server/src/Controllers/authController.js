@@ -70,7 +70,6 @@ export async function verifyUser(req, res) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     return res.json({
       ok: true,
-      user: { id: payload.id, email: payload.email },
     });
   } catch (e) {
     return res.status(401).json({ error: "Invalid/expired token" });
@@ -82,11 +81,47 @@ export async function getUser(req, res) {
     const token = req.cookies?.token;
     if (!token) return res.status(401).json({ error: "Auth required" });
     const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await findUserByEmail(payload.email);
+    if(!user) return res.status(401).json({ error: "User not found" });
     return res.json({
       ok: true,
-      user: { id: payload.id, email: payload.email },
+      user:{id: user.id, email: user.email, name: user.name},
     });
   } catch (e) {
     return res.status(401).json({ error: "Invalid/expired token" });
   }
+}
+
+
+export const setToken = async (req,res) => {
+  try {
+    const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ error: "Token is required" });
+  }
+
+  // Verify the token is valid
+  const payload = jwt.verify(token, process.env.JWT_SECRET);
+  
+  // Set the cookie that your requireAuth middleware expects
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none', // Allow cross-site cookies
+    domain: process.env.NODE_ENV === 'production' 
+    ? '.vercel.app' // Allow subdomains
+    : 'localhost', // Set for localhost domain
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/'
+  });
+
+  res.json({ 
+    success: true, 
+    message: "Token set successfully",
+    user: { id: payload.id, email: payload.email }
+  });
+} catch (error) {
+  console.error('Set token error:', error);
+  res.status(401).json({ error: "Invalid token" });
+}
 }

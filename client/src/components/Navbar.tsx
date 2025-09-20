@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,12 +15,33 @@ import {
   Menu,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "@/api/user";
+import { logout, getPersonalInfo } from "@/api/user";
 import { useToast } from "@/hooks/use-toast";
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [user, setUser] = useState({id: "1123425", name: "John Doe", email: "john.doe@example.com"});
+  const [isLoading, setIsLoading] = useState(true);
+
+   useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        setIsLoading(true);
+        const userDetails = await getPersonalInfo();
+        if (userDetails) {
+          setUser(userDetails);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+        setUser({id: "1123425", name: "John Doe", email: "john.doe@example.com"});
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   const handleNavigateToHistory = () => {
     navigate("/records");
@@ -32,8 +53,7 @@ export const Navbar = () => {
     toast({ title: "Signed out", description: "You have been logged out." });
     navigate("/auth");
   };
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
+  // const user = JSON.parse(localStorage.getItem("user") || "{}");
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="container mx-auto px-2 md:px-6 py-4 flex items-center justify-between">

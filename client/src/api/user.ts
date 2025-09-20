@@ -38,9 +38,8 @@ export async function logout() {
 
 // The server has helpers verifyUser/getUser but not routed; adjust if added later
 export async function getPersonalInfo() {
-  // Attempt cookie-based identity via a lightweight ping if available later
-  // For now, return null to keep API surface consistent
-  return null as unknown as { id: string; name?: string; email: string } | null;
+  const { data } = await http.get("/auth/me");
+  return data.user;
 }
 
 export async function updateSettings(_settings: Record<string, unknown>) {

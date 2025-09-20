@@ -42,10 +42,52 @@ app.use((req, res, next) => {
   next();
 });
 
+const getCorsOrigins = () => {
+  const isLocal = process.env.NODE_ENV !== 'production';
+  const isVercel = process.env.VERCEL === '1';
+  
+  if (isLocal) {
+    // Local development
+    return [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174"
+    ];
+  } else {
+    const vercelUrl = process.env.VERCEL_URL;
+    const frontendUrl = process.env.FRONTEND_URL;  
+    const allowedOrigins = process.env.ALLOWED_ORIGINS;  
+    const origins = [];
+    
+    if (vercelUrl) {
+      origins.push(`https://${vercelUrl}`);
+    }
+    
+    if (frontendUrl) {
+      origins.push(frontendUrl);
+    }
+    
+    if (allowedOrigins) {
+      origins.push(allowedOrigins);
+    }
+
+    if (origins.length === 0) {
+      return true; // Allow all origins
+    }
+    return origins;
+  }
+};
+
+
 app.use(
   cors({
-    origin: true,
+    origin: getCorsOrigins(),
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json({ limit: "2mb" }));
@@ -63,7 +105,10 @@ export default app;
 
 // Only start server in development
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  initializeDbIfNeeded().then( () => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log('Database initialized successfully');
+    });
   });
 }

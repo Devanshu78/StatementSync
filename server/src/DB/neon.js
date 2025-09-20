@@ -7,14 +7,36 @@ let pool = null;
 
 const getPool = () => {
   if (!pool) {
-    pool = new Pool({
+    // Detect environment
+    const isLocal = process.env.NODE_ENV !== 'production';
+    const isVercel = process.env.VERCEL === '1';
+    
+    // Base configuration
+    const baseConfig = {
       connectionString: process.env.DB_URL,
       ssl: { rejectUnauthorized: false },
-      // ✅ Serverless optimizations
-      max: 1, // Limit connections for serverless
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
+    };
+
+    // Environment-specific configurations
+    if (isVercel || !isLocal) {
+      // Vercel/Production serverless configuration
+      pool = new Pool({
+        ...baseConfig,
+        max: 1, // Single connection for serverless
+        idleTimeoutMillis: 10000, // 10 seconds
+        connectionTimeoutMillis: 5000, // 5 seconds
+      });
+    } else {
+      // Local development configuration
+      pool = new Pool({
+        ...baseConfig,
+        max: 10,
+        idleTimeoutMillis: 300000, 
+        connectionTimeoutMillis: 10000,
+        keepAlive: true, 
+        keepAliveInitialDelayMillis: 10000,
+      });
+    }
   }
   return pool;
 };
@@ -143,7 +165,6 @@ export async function listUploadsByUser(userId, limit = 20) {
   );
   return rows;
 }
-
 
 export async function getAuditById(uploadId, userId) {
   const pool = getPool();
