@@ -73,6 +73,8 @@ const getCorsOrigins = () => {
       origins.push(allowedOrigins);
     }
 
+    console.log(origins);
+
     if (origins.length === 0) {
       return true; // Allow all origins
     }
