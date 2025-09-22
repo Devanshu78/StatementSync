@@ -49,6 +49,14 @@ app.use((req, res, next) => {
   console.log('URL:', req.url);
   console.log('Origin:', req.headers.origin);
   console.log('User-Agent:', req.headers['user-agent']);
+  console.log('Headers:', req.headers);
+  console.log('Cookies:', req.cookies);
+  console.log('Body:', req.body);
+  console.log('Query:', req.query);
+  console.log('Params:', req.params);
+  console.log('Protocol:', req.protocol);
+  console.log('Host:', req.host);
+  console.log('Path:', req.path);
   next();
 });
 
