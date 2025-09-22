@@ -42,6 +42,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Debug middleware to log incoming requests
+app.use((req, res, next) => {
+  console.log('📥 Incoming Request:');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Origin:', req.headers.origin);
+  console.log('User-Agent:', req.headers['user-agent']);
+  next();
+});
+
 const getCorsOrigins = () => {
   const isLocal = process.env.NODE_ENV !== 'production';
   const isVercel = process.env.VERCEL === '1';
