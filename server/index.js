@@ -70,10 +70,9 @@ const getCorsOrigins = () => {
     }
     
     if (allowedOrigins) {
-      origins.push(allowedOrigins);
+      console.log("ALLOWED_ORIGINS console log", process.env.ALLOWED_ORIGINS);
+      origins.push(...process.env.ALLOWED_ORIGINS.split(','));
     }
-
-    console.log(origins);
 
     if (origins.length === 0) {
       return true; // Allow all origins

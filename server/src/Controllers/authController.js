@@ -109,7 +109,7 @@ export const setToken = async (req,res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none', // Allow cross-site cookies
     domain: process.env.NODE_ENV === 'production' 
-    ? '.vercel.app' // Allow subdomains
+    ? undefined // Allow subdomains
     : 'localhost', // Set for localhost domain
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     path: '/'
