@@ -70,8 +70,8 @@ const getCorsOrigins = () => {
     }
     
     if (allowedOrigins) {
-      console.log("ALLOWED_ORIGINS console log", process.env.ALLOWED_ORIGINS);
       origins.push(...process.env.ALLOWED_ORIGINS.split(','));
+      origins.push(`https://zentra-rho-kohl.vercel.app/`);
     }
 
     if (origins.length === 0) {
