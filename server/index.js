@@ -71,9 +71,10 @@ const getCorsOrigins = () => {
     
     if (allowedOrigins) {
       origins.push(...process.env.ALLOWED_ORIGINS.split(','));
-      origins.push(`https://zentra-rho-kohl.vercel.app/`);
     }
 
+    origins.push(`https://zentra-rho-kohl.vercel.app`);
+    
     if (origins.length === 0) {
       return true; // Allow all origins
     }
