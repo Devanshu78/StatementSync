@@ -42,24 +42,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Debug middleware to log incoming requests
-app.use((req, res, next) => {
-  console.log('📥 Incoming Request:');
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  console.log('Origin:', req.headers.origin);
-  console.log('User-Agent:', req.headers['user-agent']);
-  console.log('Headers:', req.headers);
-  console.log('Cookies:', req.cookies);
-  console.log('Body:', req.body);
-  console.log('Query:', req.query);
-  console.log('Params:', req.params);
-  console.log('Protocol:', req.protocol);
-  console.log('Host:', req.host);
-  console.log('Path:', req.path);
-  next();
-});
-
 const getCorsOrigins = () => {
   const isLocal = process.env.NODE_ENV !== 'production';
   const isVercel = process.env.VERCEL === '1';
@@ -106,10 +88,32 @@ app.use(
     origin: getCorsOrigins(),
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders:  [
+      "Content-Type", 
+      "Authorization", 
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers"
+    ],
+    exposedHeaders: ["Set-Cookie"],
     optionsSuccessStatus: 200,
   })
 );
+
+app.use((req, res, next) => {
+  // Set CORS headers manually for cross-origin requests
+  if (req.headers.origin) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Expose-Headers', 'Set-Cookie');
+  }
+  next();
+});
+
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
